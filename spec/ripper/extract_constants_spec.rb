@@ -31,8 +31,8 @@ module Test
     test_class_method {params: SomeClass}
 
     def test_method
-      SomeClass.call_method
-      arg = SomeClass.new
+      SomeClass1.call_method
+      arg = SomeClass2.new
     end
   end
 end
@@ -49,7 +49,8 @@ CODE
       desc 'Blablabla',
         entity: [Test::SomeAnotherEntity]
       get :test do
-        'test2 response' #changed: 'test2 response changed'
+        SomeClass.usage
+        'test2 response'
       end
     end
   end
@@ -71,7 +72,11 @@ CODE
 
     expect(consts[:used].flatten).to include(
                 '::Test3::AnotherClass',
-                '::Test::NotExists::Test1'
+                '::Test::NotExists::Test1',
+                '::SomeExternalClass',
+                '::Superclass',
+                '::SomeClass1',
+                '::SomeClass2'
             )
 
   end
@@ -84,7 +89,8 @@ CODE
     expect(consts[:used].flatten).to include(
                 '::Test::Mount2',
                 '::Test::Mount10',
-                '::Test::SomeAnotherEntity'
+                '::Test::SomeAnotherEntity',
+                '::SomeClass'
             )
 
   end

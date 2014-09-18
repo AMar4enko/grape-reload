@@ -29,7 +29,7 @@ In your config.ru you use Grape::RackBuilder to mount your apps:
         mount 'Your::App1', to: '/app1'
     end
 
-    run builder
+    run builder.boot!.application
 
 Grape::Reload will resolve all class dependencies and load your files in appropriate order, so you don't need to include 'require' or 'require_relative' for your app classes.
 

@@ -1,5 +1,4 @@
 require 'active_support/inflector'
-require 'padrino-support'
 require_relative '../reload/watcher'
 require_relative '../reload/grape_api'
 require_relative '../reload/dependency_map'

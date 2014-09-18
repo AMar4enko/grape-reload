@@ -137,7 +137,17 @@ class ASTEntity
       @node_classes_cache = Hash[node_classes.map(&:ripper_id).zip(node_classes)]
     end
     def node_for(node_ary)
-      (node_classes_cache[node_ary.first] && node_classes_cache[node_ary.first].new(*node_ary[1..-1])) || load(node_ary)
+      if node_classes_cache[node_ary.first]
+        node_classes_cache[node_ary.first].new(*node_ary[1..-1])
+      else
+        if node_ary.first.kind_of?(Symbol)
+          load(node_ary)
+        else
+          # Code position for identifier
+          return if node_ary.kind_of?(Array) and (node_ary.size == 2) and node_ary[0].kind_of?(Integer) and node_ary[1].kind_of?(Integer)
+          node_ary.map{|n| load(n) }
+        end
+      end
     end
     def load(node)
       new(*node[1..-1])
@@ -152,7 +162,15 @@ class ASTEntity
 
   def collect_constants(result, context = nil)
     result ||= TraversingResult.new
-    @body.each{|e| e.collect_constants(result, context || (TraversingContext.new)) unless e.nil?} unless @body.nil?
+    @body.each{|e|
+      case e
+        when ASTEntity
+          e.collect_constants(result, context || (TraversingContext.new)) unless e.nil?
+        when Array
+          e.map{|e| e.collect_constants(result, context || (TraversingContext.new)) unless e.nil? }
+        else
+      end
+    } unless @body.nil?
     result
   end
 end
@@ -289,9 +307,6 @@ end
 
 class ASTVarField < ASTEntity
   def self.ripper_id; :var_field end
-  def initialize(*args)
-    super
-  end
   def collect_constants(result, context)
     context[:variable_assignment] = true
     super(result, context)

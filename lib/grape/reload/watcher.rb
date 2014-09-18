@@ -1,8 +1,3 @@
-require 'padrino-core/reloader/rack'
-require 'padrino-core/reloader'
-require 'padrino-core/logger'
-require 'padrino-support/core_ext/object_space'
-require 'logging'
 require 'ripper'
 require_relative 'rack_builder'
 require_relative 'storage'

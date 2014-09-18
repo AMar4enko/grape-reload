@@ -32,13 +32,19 @@ module Grape
 
       def dependent_classes(loaded_file)
         classes = []
+        sorted = sorted_files
         cycle_classes = ->(file, visited_files = []){
           return if visited_files.include?(file)
           visited_files ||= []
           visited_files << file
           classes |= map[file][:declared] if file != loaded_file
-          dependent_files = map[file][:declared].map{|klass|
-            file_class = map.each_pair.select{|f, const_info| const_info[:used].include?(klass) }.map{|k,v| [k,v[:declared]]}
+          map[file][:declared].map{|klass|
+            file_class = map.each_pair
+                .sort{|a1, a2|
+                  sorted.index(a1.first) - sorted.index(a2.first)
+                }
+                .select{|f, const_info| const_info[:used].include?(klass) }
+                .map{|k,v| [k,v[:declared]]}
 
             file_class.each {|fc|
               classes |= fc.last

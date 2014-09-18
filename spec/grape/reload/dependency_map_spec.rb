@@ -10,11 +10,11 @@ describe Grape::Reload::DependencyMap do
         },
         'file2' => {
             declared: ['::Class2'],
-            used: ['::Class1','::Class3'],
+            used: [['::Class1'],['::Class3']],
         },
         'file3' => {
             declared: ['::Class3'],
-            used: ['::Class2'],
+            used: [['::Class1']],
         },
     }
   }
@@ -22,8 +22,7 @@ describe Grape::Reload::DependencyMap do
 
   it 'resolves dependent classes properly' do
     allow(dm).to receive(:map).and_return(file_class_map)
-    # map = instance_double(Grape::Reload::DependencyMap)
-    # allow(map).to receive(:map).and_return(file_class_map)
+    dm.resolve_dependencies!
 
     expect(dm.dependent_classes('file1')).to include('::Class2','::Class3')
   end

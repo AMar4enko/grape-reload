@@ -12,7 +12,7 @@ module Grape
       class << self
         [:error, :debug, :exception, :info, :devel].each do |level|
           define_method(level){|*args|
-            puts level.to_s.upcase+": "+args.map{|a| a.to_s}.join(' ')+"\n"
+            # Silence all reloader output by default with stub
           }
         end
       end

@@ -106,15 +106,6 @@ class TraversingResult
     if namespace.nil?
       used = used.map {|variants| variants.map{|v| (v.start_with?('::') ? '' : (namespace || '') + '::') + v }}
     end
-    #
-    # ns_variants = [namespace.to_s+'::']
-    # full_namespace[0..-2].reverse.each{|ns| ns_variants << ns + '::' + ns_variants.last}
-    # used.each do |variants|
-    #   # variants = variants.reject{ |v|
-    #   #   !ns_variants.find{|ns_part| v.start_with?(ns_part) }.nil?
-    #   # }
-    #   result[:used] = result[:used] << variants
-    # end
 
     result[:used] = result[:used].concat(used)
 
@@ -298,6 +289,7 @@ class ASTModule < ASTEntity
     }
   end
   def collect_constants(result, context)
+    result.declare_const(@module_name)
     result = result.nest(@module_name)
     context.module << @module_name
     super(result, context)

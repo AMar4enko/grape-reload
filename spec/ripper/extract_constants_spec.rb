@@ -53,6 +53,8 @@ CODE
         'test2 response'
       end
     end
+    module EmptyModule
+    end
   end
   class WithoutModule
     def use_top_level
@@ -88,7 +90,8 @@ CODE
   it 'extract consts from code2 correctly' do
     consts = Ripper.extract_constants(code2)
     expect(consts[:declared].flatten).to include(
-                '::Test::App2'
+                '::Test::App2',
+                '::Test::EmptyModule'
             )
 
     expect(consts[:used].flatten).to include(
@@ -98,6 +101,5 @@ CODE
                 '::SomeClass',
                 '::TopLevel'
             )
-
   end
 end

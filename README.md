@@ -1,4 +1,5 @@
 [![Build Status](https://travis-ci.org/AlexYankee/grape-reload.svg?branch=master)](https://travis-ci.org/AlexYankee/grape-reload)
+[![Gem Version](https://badge.fury.io/rb/grape-reload.svg)](http://badge.fury.io/rb/grape-reload)
 # Grape::Reload
 
 Expiremental approach for providing reloading of Grape-based rack applications in dev environment.  

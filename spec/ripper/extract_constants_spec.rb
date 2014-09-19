@@ -54,6 +54,11 @@ CODE
       end
     end
   end
+  class WithoutModule
+    def use_top_level
+      TopLevel.new
+    end
+  end
 CODE
   }
 
@@ -90,7 +95,8 @@ CODE
                 '::Test::Mount2',
                 '::Test::Mount10',
                 '::Test::SomeAnotherEntity',
-                '::SomeClass'
+                '::SomeClass',
+                '::TopLevel'
             )
 
   end

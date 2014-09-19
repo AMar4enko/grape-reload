@@ -2,6 +2,11 @@ require_relative '../../ripper/extract_constants'
 
 module Grape
   module Reload
+    class UnresolvedDependenciesError < RuntimeError
+      def message; 'One or more unresolved dependencies found' end
+    end
+
+
     class DependencyMap
       extend Forwardable
       include TSort
@@ -111,6 +116,8 @@ module Grape
         unresolved_classes.each_pair do |klass, filenames|
           filenames.each {|filename| Grape::RackBuilder.logger.error("Unresolved const reference #{klass} from: #{filename}".colorize(:red)) }
         end
+
+        raise UnresolvedDependenciesError if unresolved_classes.any?
       end
     end
 

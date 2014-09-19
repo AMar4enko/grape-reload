@@ -1,4 +1,4 @@
-require_relative '../../../lib/core_ext/object_space'
+
 
 module Grape
   module Reload

@@ -75,10 +75,11 @@ module Grape
             if environment == 'development'
               r = Rack::Builder.new
               r.use Grape::ReloadMiddleware[reload_threshold]
-              r.run m.app_class.constantize
+              r.run m.app_class
               map(m.mount_root) { run r }
             else
-              map(m.mount_root) { run m.app_class.constantize }
+              app_klass = m.app_class.constantize
+              map(m.mount_root) { run app_klass }
             end
           end
         end

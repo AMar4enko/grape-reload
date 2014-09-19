@@ -6,6 +6,7 @@ describe Grape::Reload::Watcher do
   before(:example) do
     @app =
         Grape::RackBuilder.setup do
+          add_source_path File.expand_path('**.rb', APP_ROOT)
           add_source_path File.expand_path('**/*.rb', APP_ROOT)
           environment 'development'
           reload_threshold 0
@@ -39,6 +40,20 @@ describe Grape::Reload::Watcher do
       get '/test1/mounted/test1'
       expect(last_response).to succeed
       expect(last_response.body).to eq('mounted test1 changed')
+    end
+  end
+
+  it 'remounts class on different root' do
+    get '/test2/mounted/test'
+    expect(last_response).to succeed
+    expect(last_response.body).to eq('test')
+
+    with_changed_fixture 'app2/test2.rb' do
+      get '/test2/mounted/test'
+      expect(last_response).to_not succeed
+
+      get '/test2/mounted2/test'
+      expect(last_response).to succeed
     end
   end
 

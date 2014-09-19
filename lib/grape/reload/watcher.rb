@@ -14,12 +14,10 @@ module Grape
         def logger; Grape::RackBuilder.logger end
 
         def safe_load(file, options={})
-          began_at = Time.now
           return unless options[:force] || file_changed?(file)
-          # return require(file) if feature_excluded?(file)
 
           Storage.prepare(file) # might call #safe_load recursively
-          logger.devel((file_new?(file) ? "loading" : "reloading") + "#{file}" )
+          logger.debug((file_new?(file) ? "loading" : "reloading") + "#{file}" )
           begin
             with_silence{ require(file) }
             Storage.commit(file)

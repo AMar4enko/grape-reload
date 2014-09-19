@@ -17,7 +17,7 @@ CLASS
     end
 
     def initialize(app)
-      @app_klass = app.to_s
+      @app_klass = app
     end
 
     def call(*args)
@@ -48,11 +48,16 @@ METHOD
       def reinit!
         declaration = class_declaration.dup
         @class_decl = []
+        endpoints.each { |e| e.options[:app].reinit! if e.options[:app] }
         reset!
         declaration.each {|decl|
           send(decl[0],*deep_reconstantize.call(decl[1]),&decl[2])
         }
         change!
+      end
+
+      def recursive_!
+
       end
     private
       def class_declaration

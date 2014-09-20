@@ -7,7 +7,7 @@ module Grape
     module Watcher
       class << self
         MTIMES = {}
-        # include Padrino::Reloader
+
         attr_reader :sources
         def rack_builder; Grape::RackBuilder end
 

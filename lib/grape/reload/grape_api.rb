@@ -35,6 +35,12 @@ end
 
 module Grape
   module Reload
+    module EndpointPatch
+      def clear_inheritable_settings!
+        @inheritable_settings.clear
+      end
+    end
+
     module AutoreloadInterceptor
       [:set, :nest, :route, :imbue, :mount, :desc, :params, :helpers, :format, :formatter, :parser, :error_formatter, :content_type].each do |method|
         eval <<METHOD
@@ -48,8 +54,14 @@ METHOD
       def reinit!
         declaration = class_declaration.dup
         @class_decl = []
-        endpoints.each { |e| e.options[:app].reinit! if e.options[:app] }
+        endpoints_cache = endpoints
         reset!
+        inheritable_setting.clear!
+        top_level_setting.clear!
+        endpoints_cache.each { |e|
+          e.inheritable_setting.clear!
+          e.options[:app].reinit! if e.options[:app]
+        }
         declaration.each {|decl|
           send(decl[0],*deep_reconstantize.call(decl[1]),&decl[2])
         }
@@ -82,9 +94,28 @@ METHOD
   end
 end
 
+module Grape
+  module Util
+    class InheritableSetting
+      def clear!
+        self.route = {}
+        self.api_class = {}
+        self.namespace = InheritableValues.new # only inheritable from a parent when
+        # used with a mount, or should every API::Class be a seperate namespace by default?
+        self.namespace_inheritable = InheritableValues.new
+        self.namespace_stackable = StackableValues.new
+
+        self.point_in_time_copies = []
+
+        self.parent = nil
+      end
+    end
+  end
+end
+
+
 Grape::API.singleton_class.class_eval do
   alias_method :inherited_shadowed, :inherited
-  alias_method :settings_shadowed, :settings
   def inherited(*args)
     inherited_shadowed(*args)
     args.first.singleton_class.class_eval do

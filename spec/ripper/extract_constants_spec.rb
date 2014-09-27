@@ -64,6 +64,17 @@ CODE
 CODE
   }
 
+  let!(:deeply_nested) {
+    <<CODE
+  module Test
+    module Subtest
+      class App2 < Grape::API
+      end
+    end
+  end
+CODE
+  }
+
   it 'extract consts from code1 correctly' do
     consts = Ripper.extract_constants(code1)
     expect(consts[:declared].flatten).to include(
@@ -101,5 +112,10 @@ CODE
                 '::SomeClass',
                 '::TopLevel'
             )
+  end
+
+  it 'extracts consts used in deeply nested modules up to root namespace' do
+    consts = Ripper.extract_constants(deeply_nested)
+    expect(consts[:used].flatten).to include('::Grape::API')
   end
 end

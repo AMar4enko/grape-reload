@@ -53,7 +53,7 @@ class TraversingResult
         end
 
         variants << [ const_ary ]
-        @used << variants.map{|v| v.join('::')}
+        @used << (variants.map{|v| v.join('::')} << '::' + const)
       end
     else
       @used << const

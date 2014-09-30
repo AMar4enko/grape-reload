@@ -172,6 +172,13 @@ class ASTProgramDecl < ASTEntity
   end
 end
 
+class ASTDef < ASTEntity
+  def self.ripper_id; :def end
+  def collect_constants(result, context)
+    result
+  end
+end
+
 
 class ASTBody < ASTEntity
   def self.ripper_id; :bodystmt end
@@ -276,6 +283,37 @@ class ASTConstPathRef < ASTEntity
       const = @const.collect_constants(r, new_context)
       result.use_const(path_consts.used.join('::'))
     end
+    result
+  end
+end
+
+class ASTMethodAddArg < ASTEntity
+  def self.ripper_id; :method_add_arg end
+  def initialize(*args)
+    @path = ASTEntity.node_for(args.first)
+  end
+
+  def collect_constants(result, context)
+    if context[:method_add_arg]
+      r = TraversingResult.new
+      c = context.dup
+      c[:analyze_const] = false
+      path_consts = @path.collect_constants(r, context)
+      result.use_const(path_consts.used.join('::'), false)
+    else
+      r = TraversingResult.new
+      new_context = TraversingContext.new([], {method_add_arg: true, analyze_const: false})
+      path_consts = @path.collect_constants(r, new_context)
+      result.use_const(path_consts.used.join('::'))
+    end
+    result
+  end
+end
+
+class ASTMethodAddBlock < ASTEntity
+  def self.ripper_id; :method_add_block end
+
+  def collect_constants(result, context)
     result
   end
 end

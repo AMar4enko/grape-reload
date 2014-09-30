@@ -75,6 +75,19 @@ CODE
 CODE
   }
 
+  # Sequel-related
+  let!(:class_reference_with_call) {
+    <<CODE
+    module Test
+      module Subtest
+        class App2 < Grape::API(:test)
+        end
+      end
+    end
+CODE
+  }
+
+
   it 'extract consts from code1 correctly' do
     consts = Ripper.extract_constants(code1)
     expect(consts[:declared].flatten).to include(
@@ -92,10 +105,14 @@ CODE
                 '::Test3::AnotherClass',
                 '::Test::NotExists::Test1',
                 '::SomeExternalClass',
-                '::Superclass',
-                '::SomeClass1',
-                '::SomeClass2'
+                '::Superclass'
             )
+
+    expect(consts[:used].flatten).not_to include(
+                                         '::SomeClass1',
+                                         '::SomeClass2'
+                                     )
+
 
   end
   it 'extract consts from code2 correctly' do
@@ -108,14 +125,25 @@ CODE
     expect(consts[:used].flatten).to include(
                 '::Test::Mount2',
                 '::Test::Mount10',
-                '::Test::SomeAnotherEntity',
-                '::SomeClass',
-                '::TopLevel'
+                '::Test::SomeAnotherEntity'
             )
+
+    expect(consts[:used].flatten).not_to include(
+                                             '::SomeClass',
+                                             '::TopLevel'
+                                         )
+
+
   end
 
   it 'extracts consts used in deeply nested modules up to root namespace' do
     consts = Ripper.extract_constants(deeply_nested)
     expect(consts[:used].flatten).to include('::Grape::API')
   end
+
+  it 'extracts const with call (sequel-related)' do
+    consts = Ripper.extract_constants(class_reference_with_call)
+    expect(consts[:used].flatten).to include('::Grape::API')
+  end
+
 end

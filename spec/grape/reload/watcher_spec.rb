@@ -2,8 +2,10 @@ require 'grape'
 require 'spec_helper'
 
 describe Grape::Reload::Watcher do
-  def app; @app end
-  before(:example) do
+  def app
+    @app
+  end
+  before(:each) do
     @app =
         Grape::RackBuilder.setup do
           add_source_path File.expand_path('**.rb', APP_ROOT)
@@ -30,6 +32,35 @@ describe Grape::Reload::Watcher do
       expect(last_response.body).to eq('test1 response changed')
     end
   end
+
+  describe 'force_reloading' do
+    before(:each) do
+      @app =
+          Grape::RackBuilder.setup do
+            add_source_path File.expand_path('**.rb', APP_ROOT)
+            add_source_path File.expand_path('**/*.rb', APP_ROOT)
+            environment 'test'
+            force_reloading true
+            reload_threshold 0
+            mount 'Test::App1', to: '/test1'
+            mount 'Test::App2', to: '/test2'
+          end.boot!.application
+    end
+
+    it 'reloads files within any environment with force_reloading options set' do
+      get '/test1/test'
+      expect(last_response).to succeed
+      expect(last_response.body).to eq('test1 response')
+
+      with_changed_fixture 'app1/test1.rb' do
+        get '/test1/test'
+        expect(last_response).to succeed
+        expect(last_response.body).to eq('test1 response changed')
+      end
+    end
+  end
+
+
 
   it 'reloads mounted app file' do
     get '/test1/mounted/test1'

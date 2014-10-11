@@ -11,6 +11,17 @@ describe Grape::RackBuilder do
       end
     end
   }
+  let(:middleware) {
+    Class.new do
+      def initialize(app)
+        @app = app
+      end
+      def call(env)
+        @app.call(env)
+      end
+    end
+  }
+
 
   before do
     builder.setup do
@@ -37,8 +48,15 @@ describe Grape::RackBuilder do
       end
       expect(config.mounts.size).to eq(2)
     end
+
+    it 'allows to add middleware' do
+      builder.setup do
+        use middleware
+      end
+      expect(config.middleware.size).to eq(1)
+    end
   end
-  #
+
   describe '.boot!' do
     before(:each) do
       builder.setup do
@@ -63,6 +81,7 @@ describe Grape::RackBuilder do
   describe '.application' do
     before(:each) do
       builder.setup do
+        use middleware
         mount 'Test::App1', to: '/test1'
         mount 'Test::App2', to: '/test2'
       end
@@ -72,6 +91,8 @@ describe Grape::RackBuilder do
       expect{ @app = builder.application }.not_to raise_error
       expect(@app).to be_an_instance_of(Rack::Builder)
       def @app.get_map; @map end
+      def @app.get_use; @use end
+      expect(@app.get_use.size).to eq(1)
       expect(@app.get_map.keys).to include('/test1','/test2')
     end
   end

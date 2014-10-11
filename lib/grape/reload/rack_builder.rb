@@ -26,9 +26,9 @@ module Grape
     end
 
     class Config
-      attr_accessor :mounts, :sources, :options
+      attr_accessor :mounts, :sources, :options, :force_reloading
 
-      {environment: RACK_ENV, reload_threshold: 1, logger: LoggingStub}.each_pair do |attr, default|
+      {environment: RACK_ENV, reload_threshold: 1, logger: LoggingStub, force_reloading: false}.each_pair do |attr, default|
         attr_accessor attr
         define_method(attr) { |value = nil|
           @options ||= {}
@@ -39,6 +39,10 @@ module Grape
 
       def add_source_path(glob)
         (@sources ||= []) << glob
+      end
+
+      def use(*args)
+        middleware << args
       end
 
       def mount(app_class, options)
@@ -52,6 +56,10 @@ module Grape
       def mounts
         @mounts ||= []
       end
+
+      def middleware
+        @middleware ||= []
+      end
     end
 
     module ClassMethods
@@ -61,6 +69,7 @@ module Grape
       end
 
       def boot!
+        @rack_app = nil
         Grape::Reload::Watcher.setup(sources: Grape::Reload::Sources.new(config.sources))
         self
       end
@@ -68,11 +77,14 @@ module Grape
       def application
         return @rack_app if @rack_app
         mounts = config.mounts
+        middleware = config.middleware
+        force_reloading = config.force_reloading
         environment = config.environment
         reload_threshold = config.reload_threshold
         @rack_app = ::Rack::Builder.new do
+          middleware.each {|args| use *args }
           mounts.each_with_index do |m|
-            if environment == 'development'
+            if (environment == 'development') || force_reloading
               r = Rack::Builder.new
               r.use Grape::ReloadMiddleware[reload_threshold]
               r.run m.app_class

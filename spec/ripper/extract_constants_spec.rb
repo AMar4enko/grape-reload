@@ -87,6 +87,22 @@ CODE
 CODE
   }
 
+  let!(:grape_desc_args) {
+    <<CODE
+    module Test
+      class App < Grape::API
+        group do
+          desc 'Blablabla',
+            entity: [Test::SomeAnotherEntity]
+          get :test do
+            SomeClass.usage
+            'test2 response'
+          end
+        end
+      end
+    end
+CODE
+  }
 
   it 'extract consts from code1 correctly' do
     consts = Ripper.extract_constants(code1)
@@ -133,7 +149,6 @@ CODE
                                              '::TopLevel'
                                          )
 
-
   end
 
   it 'extracts consts used in deeply nested modules up to root namespace' do
@@ -146,4 +161,8 @@ CODE
     expect(consts[:used].flatten).to include('::Grape::API')
   end
 
+  it 'extracts consts from desc method args' do
+    consts = Ripper.extract_constants(grape_desc_args)
+    expect(consts[:used].flatten).to include('::Test::SomeAnotherEntity')
+  end
 end

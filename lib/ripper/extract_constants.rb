@@ -135,7 +135,7 @@ class ASTEntity
         else
           # Code position for identifier
           return if node_ary.kind_of?(Array) and (node_ary.size == 2) and node_ary[0].kind_of?(Integer) and node_ary[1].kind_of?(Integer)
-          node_ary.map{|n| load(n) }
+          node_ary.map{|n| node_for(n) }
         end
       end
     end
@@ -179,6 +179,20 @@ class ASTDef < ASTEntity
   end
 end
 
+class ASTCommand < ASTEntity
+  def self.ripper_id; :command end
+  def initialize(*args)
+    @command = args.first[1]
+    super(*args)
+  end
+  def collect_constants(result, context)
+    @old_stop_collect_constants = context[:stop_collect_constants]
+    context[:stop_collect_constants] = nil unless %w{desc mount params}.index(@command).nil?
+    ret = super(result, context)
+    context[:stop_collect_constants] = @old_stop_collect_constants
+    ret
+  end
+end
 
 class ASTBody < ASTEntity
   def self.ripper_id; :bodystmt end
@@ -246,6 +260,7 @@ class ASTConst < ASTEntity
     @const_name = args[0]
   end
   def collect_constants(result, context)
+    return super(result, context)  if context[:stop_collect_constants]
     if context[:variable_assignment]
       result.declare_const(@const_name)
     else
@@ -269,6 +284,7 @@ class ASTConstPathRef < ASTEntity
     @const = ASTEntity.node_for(args.last)
   end
   def collect_constants(result, context)
+    return super(result, context) if context[:stop_collect_constants]
     if context[:const_path_ref]
       r = TraversingResult.new
       c = context.dup
@@ -294,6 +310,7 @@ class ASTMethodAddArg < ASTEntity
   end
 
   def collect_constants(result, context)
+    return super(result, context) if context[:stop_collect_constants]
     if context[:method_add_arg]
       r = TraversingResult.new
       c = context.dup
@@ -314,7 +331,9 @@ class ASTMethodAddBlock < ASTEntity
   def self.ripper_id; :method_add_block end
 
   def collect_constants(result, context)
-    result
+    context[:stop_collect_constants] = true
+    super(result, context)
+    context[:stop_collect_constants] = nil
   end
 end
 

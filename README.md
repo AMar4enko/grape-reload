@@ -23,21 +23,22 @@ Or install it yourself as:
 
 In your config.ru you use Grape::RackBuilder to mount your apps:
 
-    builder = Grape::RackBuilder.setup do
+    Grape::RackBuilder.setup do
         logger Logger.new(STDOUT)
         add_source_path File.expand_path('**/*.rb', YOUR_APP_ROOT)
         reload_threshold 1 # Reload sources not often one second
+        force_reloading true # Force reloading for any environment (not just dev), useful for testing
         mount 'Your::App', to: '/'
         mount 'Your::App1', to: '/app1'
     end
 
-    run builder.boot!.application
+    run Grape::RackBuilder.boot!.application
 
-Grape::Reload will resolve all class dependencies and load your files in appropriate order, so you don't need to include 'require' or 'require_relative' for your app classes.
+Grape::Reload will resolve all class dependencies and load your files in appropriate order, so you don't need to include 'require' or 'require_relative' in your sources.
 
 ## Restrictions:
-
-If you want to monkey-patch class in your code for any reason, you should use 
+### Monkey patching
+If you want to monkey-patch class in code, you want to be reloaded, for any reason, you should use
     
     AlreadyDefined.class_eval do 
     end
@@ -45,18 +46,53 @@ If you want to monkey-patch class in your code for any reason, you should use
 instead of
 
     class AlreadyDefined
-    end  
+    end
 
 because it confuses dependency resolver
+
+### Full-qualified const name usage
+Consider code
+
+    require 'some_file' # (declares SomeModule::SomeClass)
+
+    here_is_your_code(SomeClass)
+
+Ruby will resolve SomeClass to SomeModule::SomeClass in runtime.
+Dependency resolver will display an error, because it expects you to
+use full-qualified class name in this situation.
+Anyway, it would not raise exception anymore (since e5b58f4)
+
+    here_is_your_code(SomeModule::SomeClass)
+
+### Other restrictions
+
+Avoid declaring constants as follows
+
+    class AlreadyDeclaredModule::MyClass
+    end
+
+use
+
+    module AlreadyDeclaredModule
+        class MyClass
+        end
+    end
+
+instead
 
 ## Known issues
 
 * It still lacks of good design :(  
 * MOAR TESTS!!!!111
 
+## TODO
+
+* example Grape application with Grape::Reload
+* Spork integration example
+
 ## Contributing
 
-1. Fork it ( https://github.com/AMar4enko/grape-reload/fork )
+1. Fork it ( https://github.com/AlexYankee/grape-reload/fork )
 2. Create your feature branch (`git checkout -b my-new-feature`)
 3. Commit your changes (`git commit -am 'Add some feature'`)
 4. Push to the branch (`git push origin my-new-feature`)

@@ -117,7 +117,7 @@ module Grape
           filenames.each {|filename| Grape::RackBuilder.logger.error("Unresolved const reference #{klass} from: #{filename}".colorize(:red)) }
         end
 
-        raise UnresolvedDependenciesError if unresolved_classes.any?
+        Grape::RackBuilder.logger.error("One or more unresolved dependencies found".colorize(:red)) if unresolved_classes.any?
       end
     end
 

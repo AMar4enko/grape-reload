@@ -42,9 +42,4 @@ describe Grape::Reload::DependencyMap do
 
     expect(dm.dependent_classes('file1')).to include('::Class2','::Class3')
   end
-
-  it "raises error if dependencies can't be resolved" do
-    allow(dm).to receive(:map).and_return(wrong_class_map)
-    expect { dm.resolve_dependencies! }.to raise_error(Grape::Reload::UnresolvedDependenciesError)
-  end
 end

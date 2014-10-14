@@ -107,7 +107,7 @@ class TraversingResult
       used = used.map {|variants| variants.map{|v| (v.start_with?('::') ? '' : (namespace || '') + '::') + v }}
     end
 
-    result[:used] = result[:used].concat(used)
+    result[:used] = result[:used].concat(used).uniq
 
     result
   end
@@ -157,7 +157,7 @@ class ASTEntity
         when ASTEntity
           e.collect_constants(result, context || (TraversingContext.new)) unless e.nil?
         when Array
-          e.map{|e| e.collect_constants(result, context || (TraversingContext.new)) unless e.nil? }
+          e.flatten.map{|e| e.collect_constants(result, context || (TraversingContext.new)) unless e.nil? }
         else
       end
     } unless @body.nil?
@@ -228,8 +228,9 @@ class ASTTopConstRef < ASTEntity
   def self.ripper_id; :top_const_ref end
   def collect_constants(result, context)
     context[:top] = true
-    super(result, context)
+    ret = super(result, context)
     context[:top] = false
+    ret
   end
 end
 
@@ -285,7 +286,7 @@ class ASTConstPathRef < ASTEntity
   end
   def collect_constants(result, context)
     return super(result, context) if context[:stop_collect_constants]
-    if context[:const_path_ref]
+    if context[:const_path_ref] || context[:method_add_arg]
       r = TraversingResult.new
       c = context.dup
       c[:analyze_const] = false
@@ -327,13 +328,21 @@ class ASTMethodAddArg < ASTEntity
   end
 end
 
+class ASTDefs < ASTEntity
+  def self.ripper_id; :defs end
+  def collect_constants(result, context)
+    result
+  end
+end
+
 class ASTMethodAddBlock < ASTEntity
   def self.ripper_id; :method_add_block end
 
   def collect_constants(result, context)
     context[:stop_collect_constants] = true
-    super(result, context)
+    ret = super(result, context)
     context[:stop_collect_constants] = nil
+    ret
   end
 end
 
@@ -357,8 +366,9 @@ class ASTVarField < ASTEntity
   def self.ripper_id; :var_field end
   def collect_constants(result, context)
     context[:variable_assignment] = true
-    super(result, context)
+    ret = super(result, context)
     context[:variable_assignment] = false
+    ret
   end
 end
 
@@ -370,6 +380,12 @@ class ASTRef < ASTEntity
   end
 end
 
+class ASTLambda < ASTEntity
+  def self.ripper_id; :lambda end
+  def initialize(*args)
+    super(*(args[0..-2]))
+  end
+end
 
 class Ripper
   def self.extract_constants(code)

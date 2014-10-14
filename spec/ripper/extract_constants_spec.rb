@@ -60,6 +60,9 @@ CODE
     def use_top_level
       TopLevel.new
     end
+    def self.method
+      SomeModule::ShouldntUse.call
+    end
   end
 CODE
   }
@@ -104,6 +107,24 @@ CODE
 CODE
   }
 
+  let!(:class_level_call_with_args) {
+    <<CODE
+    module Test
+      class TestClass
+        UseModule::UseClass.call(arg)
+      end
+    end
+CODE
+  }
+
+  let!(:lambda_class_usage) {
+    <<CODE
+    some_method ->(arg) {
+      ModuleName::ClassName.call(arg)
+    }
+CODE
+  }
+
   it 'extract consts from code1 correctly' do
     consts = Ripper.extract_constants(code1)
     expect(consts[:declared].flatten).to include(
@@ -141,7 +162,7 @@ CODE
     expect(consts[:used].flatten).to include(
                 '::Test::Mount2',
                 '::Test::Mount10',
-                '::Test::SomeAnotherEntity'
+                '::Test::SomeAnotherEntity',
             )
 
     expect(consts[:used].flatten).not_to include(
@@ -164,5 +185,15 @@ CODE
   it 'extracts consts from desc method args' do
     consts = Ripper.extract_constants(grape_desc_args)
     expect(consts[:used].flatten).to include('::Test::SomeAnotherEntity')
+  end
+
+  it 'does not mess up class name when class level method called with argument' do
+    consts = Ripper.extract_constants(class_level_call_with_args)
+    expect(consts[:used].flatten).to include('::UseModule::UseClass')
+  end
+
+  it 'does not include classes used in lambdas' do
+    consts = Ripper.extract_constants(lambda_class_usage)
+    expect(consts[:used].flatten).not_to include('::ModuleName::ClassName')
   end
 end

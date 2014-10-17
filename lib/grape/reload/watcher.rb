@@ -17,7 +17,7 @@ module Grape
           return unless options[:force] || file_changed?(file)
 
           Storage.prepare(file) # might call #safe_load recursively
-          logger.debug((file_new?(file) ? "loading" : "reloading") + "#{file}" )
+          logger.debug((file_new?(file) ? "loading" : "reloading") + " #{file}" )
           begin
             with_silence{ require(file) }
             Storage.commit(file)

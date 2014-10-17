@@ -48,7 +48,7 @@ METHOD
       def reinit!
         declaration = class_declaration.dup
         @class_decl = []
-        endpoints.each { |e| e.options[:app].reinit! if e.options[:app] }
+        endpoints.each { |e| e.options[:app].reinit! if e.options[:app].respond_to?('reinit!') }
         reset!
         declaration.each {|decl|
           send(decl[0],*deep_reconstantize.call(decl[1]),&decl[2])

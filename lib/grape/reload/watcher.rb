@@ -102,9 +102,8 @@ module Grape
             changed_files_sorted.each{|f| safe_load(f)}
           end
           changed_files_sorted.map{|f| @sources.dependent_classes(f) }.flatten.uniq.each {|class_name|
-            if (klass = class_name.constantize) < Grape::API
-              klass.reinit!
-            end
+            next unless (klass = class_name.constantize).kind_of? Class
+            klass.reinit! if klass.respond_to?('reinit!')
           }
         end
 

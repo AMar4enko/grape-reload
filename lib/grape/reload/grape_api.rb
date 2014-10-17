@@ -60,7 +60,7 @@ METHOD
         top_level_setting.clear!
         endpoints_cache.each { |e|
           e.inheritable_setting.clear!
-          e.options[:app].reinit! if e.options[:app]
+          e.options[:app].reinit! if e.options[:app].respond_to?('reinit!')
         }
         declaration.each {|decl|
           send(decl[0],*deep_reconstantize.call(decl[1]),&decl[2])

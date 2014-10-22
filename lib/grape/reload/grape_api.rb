@@ -36,47 +36,68 @@ end
 module Grape
   module Reload
     module AutoreloadInterceptor
-      [:set, :nest, :route, :imbue, :mount, :desc, :params, :helpers, :format, :formatter, :parser, :error_formatter, :content_type].each do |method|
-        eval <<METHOD
-        def #{method}(*args, &block)
-          class_declaration << [:#{method},args,block]
+      extend ActiveSupport::Concern
+
+      def add_head_not_allowed_methods_and_options_methods(*args, &block)
+        self.class.skip_declaration = true
+        super(*args, &block)
+        self.class.skip_declaration = false
+      end
+
+      module ClassMethods
+        attr_accessor :skip_declaration
+
+        def namespace(*args, &block)
+          @skip_declaration = true
+          class_declaration << [:namespace,args,block]
           super(*args, &block)
+          @skip_declaration = false
         end
-METHOD
-      end
 
-      def reinit!
-        declaration = class_declaration.dup
-        @class_decl = []
-        endpoints.each { |e| e.options[:app].reinit! if e.options[:app].respond_to?('reinit!') }
-        reset!
-        declaration.each {|decl|
-          send(decl[0],*deep_reconstantize.call(decl[1]),&decl[2])
-        }
-        change!
-      end
-
-      def recursive_!
-
-      end
-    private
-      def class_declaration
-        @class_decl ||= []
-      end
-      def deep_reconstantize
-        proc = ->(value) {
-          case value
-            when Hash
-              Hash[value.each_pair.map { |k,v| [proc.call(k), proc.call(v)] }]
-            when Array
-              value.map { |v| proc.call(v) }
-            when Class
-              return if value.to_s[0,2] == '#<'
-              value.to_s.constantize
-            else
-              value
+        [:set, :imbue, :mount, :route, :desc, :params, :helpers, :format, :formatter, :parser, :error_formatter, :content_type].each do |method|
+          eval <<METHOD
+          def #{method}(*args, &block)
+            class_declaration << [:#{method},args,block] unless @skip_declaration
+            super(*args, &block)
           end
-        }
+METHOD
+        end
+
+        def reinit!
+          declaration = class_declaration.dup
+          @class_decl = []
+          endpoints_cache = endpoints
+          reset!
+          endpoints_cache.each { |e| e.options[:app].reinit! if e.options[:app].respond_to?('reinit!') }
+
+          declaration.each {|decl|
+            send(decl[0],*deep_reconstantize.call(decl[1]),&decl[2])
+          }
+          change!
+        end
+
+        def recursive_!
+
+        end
+      private
+        def class_declaration
+          @class_decl ||= []
+        end
+        def deep_reconstantize
+          proc = ->(value) {
+            case value
+              when Hash
+                Hash[value.each_pair.map { |k,v| [proc.call(k), proc.call(v)] }]
+              when Array
+                value.map { |v| proc.call(v) }
+              when Class
+                return value if value.to_s[0,2] == '#<'
+                value.to_s.constantize
+              else
+                value
+            end
+          }
+        end
       end
     end
   end
@@ -87,7 +108,7 @@ Grape::API.singleton_class.class_eval do
   alias_method :settings_shadowed, :settings
   def inherited(*args)
     inherited_shadowed(*args)
-    args.first.singleton_class.class_eval do
+    args.first.class_eval do
       include Grape::Reload::AutoreloadInterceptor
     end
   end

@@ -51,7 +51,8 @@ describe Grape::RackBuilder do
 
     it 'allows to add middleware' do
       builder.setup do
-        use middleware
+        use middleware do
+        end
       end
       expect(config.middleware.size).to eq(1)
     end

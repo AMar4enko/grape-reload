@@ -41,8 +41,8 @@ module Grape
         (@sources ||= []) << glob
       end
 
-      def use(*args)
-        middleware << args
+      def use(*args, &block)
+        middleware << [args, block]
       end
 
       def mount(app_class, options)
@@ -82,7 +82,10 @@ module Grape
         environment = config.environment
         reload_threshold = config.reload_threshold
         @rack_app = ::Rack::Builder.new do
-          middleware.each {|args| use *args }
+          middleware.each do |parameters|
+            parameters.length == 1 ? use(*parameters.first) : use(*parameters.first, &parameters.last)
+          end
+
           mounts.each_with_index do |m|
             if (environment == 'development') || force_reloading
               r = Rack::Builder.new

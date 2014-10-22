@@ -1,10 +1,12 @@
 require 'spec_helper'
 require_relative '../../../lib/grape/reload/grape_api'
 describe Grape::Reload::AutoreloadInterceptor do
-  let(:api_class) {
+  let!(:api_class) {
     nested_class = Class.new(Grape::API) do
-      get :route do
-        'nested route'
+      namespace :nested do
+        get :route do
+          'nested route'
+        end
       end
     end
 
@@ -18,7 +20,7 @@ describe Grape::Reload::AutoreloadInterceptor do
   }
 
   describe '.reinit!' do
-    let(:app) {
+    let!(:app) {
       app = Rack::Builder.new
       app.run api_class
       app
@@ -31,10 +33,16 @@ describe Grape::Reload::AutoreloadInterceptor do
       get '/test_route'
       expect(last_response).to succeed
       expect(last_response.body).to eq('test')
+      get '/nested/nested/route'
+      expect(last_response).to succeed
+      expect(last_response.body).to eq('nested route')
       api_class.reinit!
       get '/test_route'
       expect(last_response).to succeed
       expect(last_response.body).to eq('test')
+      get '/nested/nested/route'
+      expect(last_response).to succeed
+      expect(last_response.body).to eq('nested route')
     end
   end
 end

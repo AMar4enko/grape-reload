@@ -107,7 +107,7 @@ class TraversingResult
       used = used.map {|variants| variants.map{|v| (v.start_with?('::') ? '' : (namespace || '') + '::') + v }}
     end
 
-    result[:used] = result[:used].concat(used).uniq
+    result[:used] = result[:used].concat(used.map{|klasses| klasses.reject{|k| k == '::'}.uniq}.reject{|klasses| klasses.empty?})
 
     result
   end

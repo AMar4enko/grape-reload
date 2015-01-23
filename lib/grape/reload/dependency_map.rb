@@ -24,7 +24,14 @@ module Grape
       def initialize(sources)
         @sources = sources
         files = @sources.map{|p| Dir[p]}.flatten.uniq
-        @map = Hash[files.zip(files.map{|file| Ripper.extract_constants(File.read(file))})]
+        @map = Hash[files.zip(files.map do |file|
+                                begin
+                                  Ripper.extract_constants(File.read(file))
+                                rescue
+                                  Grape::RackBuilder.logger.error("Theres is an error while parsing #{file}")
+                                  []
+                                end
+                              end)]
       end
 
       def sorted_files

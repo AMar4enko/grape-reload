@@ -28,7 +28,7 @@ module Test
   CONST_DEF2 = Test3::AnotherClass
   CONST_DEF3 = SomeExternalClass
   class Test < Superclass
-    test_class_method {params: SomeClass}
+    test_class_method({params: SomeClass})
 
     def test_method
       SomeClass1.call_method

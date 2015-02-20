@@ -197,7 +197,7 @@ end
 class ASTBody < ASTEntity
   def self.ripper_id; :bodystmt end
   def initialize(*args)
-    @body = args.first.map{ |node| ASTEntity.node_for(node) }
+    @body = args.reject(&:nil?).map{ |node| ASTEntity.node_for(node) }
   end
   def collect_constants(result, context)
     context[:variable_assignment] = false
@@ -350,9 +350,7 @@ class ASTModule < ASTEntity
   def self.ripper_id; :module end
   def initialize(*args)
     @module_name = args.find{|a| a.first == :const_ref}.last[1]
-    @body = args.find{|a| a.first == :bodystmt}[1].map{|node|
-      ASTEntity.node_for(node)
-    }
+    @body = [ASTEntity.node_for(args.find{|a| a.first == :bodystmt})]
   end
   def collect_constants(result, context)
     result.declare_const(@module_name)
@@ -387,9 +385,30 @@ class ASTLambda < ASTEntity
   end
 end
 
+class ASTStatementsAdd < ASTEntity
+  def self.ripper_id; :stmts_add end
+  def initialize(*args)
+    super(*args)
+  end
+end
+
+class ASTStatementsNew < ASTEntity
+  def self.ripper_id; :stmts_new end
+  def initialize(*args)
+    super(*args)
+  end
+end
+
+class ASTStatementsProgram < ASTEntity
+  def self.ripper_id; :program end
+  def initialize(*args)
+    super(args.first)
+  end
+end
+
 class Ripper
   def self.extract_constants(code)
-    ast = Ripper.sexp(code)
+    ast = Ripper.sexp_raw(code)
     result = ASTEntity.node_for(ast).collect_constants(TraversingResult.new)
     consts = result.extract_consts
     consts[:declared].flatten!

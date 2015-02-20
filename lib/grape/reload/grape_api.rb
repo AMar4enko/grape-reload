@@ -69,8 +69,22 @@ module Grape
 METHOD
         end
 
-        def reinit!
-          declaration = class_declaration.dup
+        def fire_definitions!
+          @declaration_cache.each {|decl|
+            send(decl[0],*deep_reconstantize.call(decl[1]),&decl[2])
+          }
+
+          endpoints.each { |e|
+            if e.options[:app].respond_to?('fire_definitions!')
+              e.options[:app].inheritable_setting.inherit_from(e.options[:app].inheritable_setting.parent)
+              e.options[:app].fire_definitions!
+            end
+
+          }
+        end
+
+        def reinit!(root = true)
+          @declaration_cache = class_declaration.dup
           @class_decl = []
           endpoints_cache = endpoints
           reset!
@@ -78,12 +92,10 @@ METHOD
           top_level_setting.clear!
           endpoints_cache.each { |e|
             e.inheritable_setting.clear!
-            e.options[:app].reinit! if e.options[:app].respond_to?('reinit!')
-          }
-          declaration.each {|decl|
-            send(decl[0],*deep_reconstantize.call(decl[1]),&decl[2])
+            e.options[:app].reinit!(false) if e.options[:app].respond_to?('reinit!')
           }
           change!
+          fire_definitions! if root
         end
 
         def recursive_!
@@ -126,7 +138,7 @@ module Grape
 
         self.point_in_time_copies = []
 
-        self.parent = nil
+        # self.parent = nil
       end
     end
   end

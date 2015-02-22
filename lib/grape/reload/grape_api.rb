@@ -83,7 +83,7 @@ METHOD
           }
         end
 
-        def reinit!(root = true)
+        def reinit!
           @declaration_cache = class_declaration.dup
           @class_decl = []
           endpoints_cache = endpoints
@@ -92,10 +92,10 @@ METHOD
           top_level_setting.clear!
           endpoints_cache.each { |e|
             e.inheritable_setting.clear!
-            e.options[:app].reinit!(false) if e.options[:app].respond_to?('reinit!')
+            e.options[:app].reinit! if e.options[:app].respond_to?('reinit!')
           }
           change!
-          fire_definitions! if root
+          fire_definitions!
         end
 
         def recursive_!

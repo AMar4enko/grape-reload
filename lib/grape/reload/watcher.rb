@@ -24,7 +24,7 @@ module Grape
             update_modification_time(file)
           rescue Exception => exception
             unless options[:cyclic]
-              logger.exception exception, :short
+              logger.error exception
               logger.error "Failed to load #{file}; removing partially defined constants"
             end
             Storage.rollback(file)

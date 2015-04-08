@@ -10,12 +10,20 @@ describe Grape::Reload::AutoreloadInterceptor do
       end
     end
 
+    versioned_class = Class.new(Grape::API) do
+      version :v1
+      get 'versioned_route' do
+        'versioned route'
+      end
+    end
+
     Class.new(Grape::API) do
       format :txt
       get :test_route do
         'test'
       end
       mount nested_class => '/nested'
+      mount versioned_class
     end
   }
 
@@ -44,5 +52,16 @@ describe Grape::Reload::AutoreloadInterceptor do
       expect(last_response).to succeed
       expect(last_response.body).to eq('nested route')
     end
+
+    it 'preserves the API version' do
+      get '/v1/versioned_route'
+      expect(last_response).to succeed
+      expect(last_response.body).to eq('versioned route')
+      api_class.reinit!
+      get '/v1/versioned_route'
+      expect(last_response).to succeed
+      expect(last_response.body).to eq('versioned route')
+    end
+
   end
 end

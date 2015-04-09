@@ -60,7 +60,7 @@ module Grape
           @skip_declaration = false
         end
 
-        [:set, :imbue, :mount, :route, :desc, :params, :helpers, :format, :formatter, :parser, :error_formatter, :content_type].each do |method|
+        [:set, :imbue, :mount, :route, :desc, :params, :helpers, :format, :formatter, :parser, :error_formatter, :content_type, :version].each do |method|
           eval <<METHOD
           def #{method}(*args, &block)
             class_declaration << [:#{method},args,block] unless @skip_declaration

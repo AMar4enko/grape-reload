@@ -103,7 +103,7 @@ instead
 * It still lacks of good design :(  
 * MOAR TESTS!!!!111
 
-## TODO
+## TODO
 
 * example Grape application with `Grape::Reload`
 * Spork integration example
